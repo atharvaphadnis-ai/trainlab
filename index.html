@@ -1,0 +1,829 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrainLab</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, "Segoe UI", Arial, sans-serif; background: #f1f5f9; color: #111827; font-size: 15px; }
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: 220px; background: #1f2937; color: #e5e7eb; padding: 16px 12px; flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; }
+  .sidebar-title { font-size: 20px; font-weight: 700; color: #fff; margin: 0 8px 14px; }
+  .sidebar-footer { margin-top: auto; font-size: 12px; color: #94a3b8; padding: 8px; }
+  .nav-btn { display: block; width: 100%; text-align: left; background: none; border: none; color: #cbd5e1; padding: 9px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+  .nav-btn:hover { background: #334155; }
+  .nav-btn.active { background: #2563eb; color: #fff; }
+  .nav-project-name { font-size: 12px; color: #94a3b8; padding: 8px 12px 4px; word-break: break-word; }
+  main { flex: 1; padding: 24px; width: 100%; max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 6px; }
+  h2 { font-size: 17px; margin: 0 0 10px; }
+  h3 { font-size: 15px; margin: 16px 0 8px; }
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  button { background: #2563eb; border: none; color: #fff; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+  button:hover { filter: brightness(1.12); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.danger { background: #dc2626; }
+  button.secondary { background: #64748b; }
+  input, select { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: #fff; }
+  label { display: block; font-size: 13px; color: #475569; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .hidden { display: none !important; }
+  .muted { color: #64748b; font-size: 13px; }
+  .error-text { color: #b91c1c; font-size: 14px; }
+  .badge { background: #e2e8f0; border-radius: 99px; padding: 2px 10px; font-size: 12px; color: #334155; }
+  .badge.warn { background: #fef3c7; color: #92400e; }
+  .message-banner { padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; background: #dcfce7; color: #166534; font-size: 14px; }
+  .message-banner.error { background: #fee2e2; color: #991b1b; }
+  .project-card { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+  .class-card { margin-bottom: 12px; }
+  .class-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .class-header strong { font-size: 15px; }
+  .thumbs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .thumb { position: relative; width: 108px; height: 108px; border-radius: 6px; overflow: hidden; border: 1px solid #e2e8f0; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb-delete { position: absolute; top: 4px; right: 4px; padding: 2px 7px; font-size: 12px; background: rgba(220, 38, 38, 0.9); }
+  .progress-track { background: #e2e8f0; border-radius: 99px; height: 12px; overflow: hidden; margin: 8px 0; }
+  .progress-fill { background: #2563eb; height: 100%; width: 0; transition: width 0.3s; }
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+  .metric-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center; }
+  .metric-card span { display: block; font-size: 12px; color: #64748b; margin-bottom: 4px; }
+  .metric-card strong { font-size: 19px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { border: 1px solid #e2e8f0; padding: 6px 10px; text-align: left; }
+  th { background: #f8fafc; }
+  .matrix-table td, .matrix-table th { text-align: center; }
+  .table-scroll { overflow-x: auto; }
+  .modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); display: flex; align-items: center; justify-content: center; z-index: 10; }
+  .modal-content { background: #fff; border-radius: 10px; padding: 16px; width: min(640px, 92vw); }
+  .modal-content video { width: 100%; border-radius: 8px; background: #000; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .pred-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+  .pred-name { width: 110px; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pred-bar { flex: 1; background: #e2e8f0; height: 10px; border-radius: 99px; overflow: hidden; }
+  .pred-fill { height: 100%; background: #94a3b8; }
+  .pred-fill.top { background: #2563eb; }
+  .pred-value { width: 56px; text-align: right; font-size: 13px; }
+  .pred-main { margin: 10px 0; font-size: 16px; }
+  #test-preview img { max-width: 280px; max-height: 280px; border-radius: 8px; border: 1px solid #e2e8f0; }
+  .files-table a { color: #2563eb; text-decoration: none; font-weight: 600; }
+  @media (max-width: 640px) {
+    .app { flex-direction: column; }
+    .sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; align-items: center; padding: 10px; }
+    .sidebar-title { margin: 0 8px; }
+    nav { display: flex; flex-wrap: wrap; }
+    .sidebar-footer { display: none; }
+    main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-title">TrainLab</div>
+    <nav>
+      <button class="nav-btn" data-page="projects" id="nav-projects">Projects</button>
+      <div id="project-nav" class="hidden">
+        <div class="nav-project-name" id="nav-project-name"></div>
+        <button class="nav-btn" data-page="dataset">Dataset</button>
+        <button class="nav-btn" data-page="train">Train</button>
+        <button class="nav-btn" data-page="test">Test model</button>
+        <button class="nav-btn" data-page="evaluate">Evaluate</button>
+        <button class="nav-btn" data-page="export">Export</button>
+      </div>
+    </nav>
+    <div class="sidebar-footer">Train image classifiers locally, inspired by Teachable Machine.</div>
+  </aside>
+
+  <main>
+    <div id="message-banner" class="message-banner hidden"></div>
+
+    <!-- Projects page -->
+    <section id="page-projects" class="page">
+      <h1>Projects</h1>
+      <p class="muted">Each project holds its own classes, images and trained model.</p>
+      <div class="card">
+        <h2>New project</h2>
+        <div class="row">
+          <input id="new-project-name" placeholder="Project name, e.g. Cat or Dog" style="flex:1; min-width:180px;">
+          <input id="new-project-description" placeholder="Description (optional)" style="flex:2; min-width:180px;">
+          <button id="create-project-btn">Create project</button>
+        </div>
+      </div>
+      <div id="projects-list"></div>
+    </section>
+
+    <!-- Dataset page -->
+    <section id="page-dataset" class="page hidden">
+      <h1 id="dataset-title">Dataset</h1>
+      <p class="muted" id="dataset-info"></p>
+      <div class="card">
+        <h2>Classes</h2>
+        <div class="row">
+          <input id="new-class-name" placeholder="New class name, e.g. Cat" style="flex:1; min-width:160px;">
+          <button id="add-class-btn">Add class</button>
+        </div>
+        <p class="muted">Create one class per category. Every class needs at least 5 images before training.</p>
+      </div>
+      <div class="card">
+        <h2>Add images</h2>
+        <div class="row">
+          <label>Into class:</label>
+          <select id="upload-class-select"></select>
+          <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.webp">
+          <button id="upload-btn">Upload images</button>
+          <button id="open-webcam-btn" class="secondary">Open webcam</button>
+        </div>
+        <p class="muted">Supported formats: JPG, JPEG, PNG, WEBP (max 10 MB per image). Duplicates are skipped.</p>
+      </div>
+      <div id="class-thumbnails"></div>
+    </section>
+
+    <!-- Training page -->
+    <section id="page-train" class="page hidden">
+      <h1>Train model</h1>
+      <p class="muted">Transfer learning with MobileNetV2: the pretrained part is frozen and only a small classification head is trained on your images.</p>
+      <div class="card">
+        <h2>Settings</h2>
+        <div class="form-grid">
+          <label>Epochs <input type="number" id="train-epochs" value="15" min="1" max="200"></label>
+          <label>Batch size <input type="number" id="train-batch" value="16" min="1" max="64"></label>
+          <label>Image size
+            <select id="train-image-size">
+              <option value="96">96 px (fastest)</option>
+              <option value="128">128 px</option>
+              <option value="160" selected>160 px (recommended)</option>
+              <option value="224">224 px (slowest)</option>
+            </select>
+          </label>
+          <label>Validation split
+            <select id="train-val-split">
+              <option value="0">0 (no validation)</option>
+              <option value="0.1">10%</option>
+              <option value="0.2" selected>20%</option>
+              <option value="0.3">30%</option>
+              <option value="0.5">50%</option>
+            </select>
+          </label>
+          <label>Learning rate
+            <select id="train-lr">
+              <option value="0.01">0.01</option>
+              <option value="0.005">0.005</option>
+              <option value="0.001" selected>0.001 (recommended)</option>
+              <option value="0.0005">0.0005</option>
+              <option value="0.0001">0.0001</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <button id="start-training-btn">Start training</button>
+          <button id="cancel-training-btn" class="danger hidden">Cancel training</button>
+        </div>
+        <p class="muted">On the first run, about 9 MB of pretrained MobileNetV2 weights are downloaded once and cached.</p>
+      </div>
+      <div class="card">
+        <h2>Progress</h2>
+        <p id="training-status-text" class="muted">Not training.</p>
+        <div class="progress-track"><div class="progress-fill" id="training-progress-fill"></div></div>
+        <div class="metric-grid">
+          <div class="metric-card"><span>Epoch</span><strong id="metric-epoch">—</strong></div>
+          <div class="metric-card"><span>Progress</span><strong id="metric-progress">—</strong></div>
+          <div class="metric-card"><span>Training accuracy</span><strong id="metric-accuracy">—</strong></div>
+          <div class="metric-card"><span>Validation accuracy</span><strong id="metric-val-accuracy">—</strong></div>
+          <div class="metric-card"><span>Training loss</span><strong id="metric-loss">—</strong></div>
+          <div class="metric-card"><span>Validation loss</span><strong id="metric-val-loss">—</strong></div>
+        </div>
+        <p class="muted" id="training-summary"></p>
+      </div>
+    </section>
+
+    <!-- Test page -->
+    <section id="page-test" class="page hidden">
+      <h1>Test model</h1>
+      <p class="muted">Upload an image or use your webcam. Confidence shows how certain the model feels — it does not guarantee correctness.</p>
+      <div class="card">
+        <div class="row">
+          <input type="file" id="test-file-input" accept=".jpg,.jpeg,.png,.webp">
+          <button id="test-webcam-btn" class="secondary">Use webcam</button>
+        </div>
+        <div id="test-preview" style="margin-top:12px;"></div>
+        <div id="test-result" style="margin-top:12px;">
+          <p class="muted">The prediction appears here. Train a model first if you have not yet.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Evaluate page -->
+    <section id="page-evaluate" class="page hidden">
+      <h1>Evaluate model</h1>
+      <p class="muted">Runs your trained model on every image in the project and computes accuracy, precision, recall, F1 and a confusion matrix.</p>
+      <div class="row">
+        <button id="run-evaluation-btn">Run evaluation</button>
+      </div>
+      <div id="evaluation-result" style="margin-top:16px;"></div>
+    </section>
+
+    <!-- Export page -->
+    <section id="page-export" class="page hidden">
+      <h1>Export model</h1>
+      <p class="muted">Creates four files: the Keras model (.keras), a TensorFlow Lite model (.tflite), the class labels (.txt) and the settings (.json).</p>
+      <div class="row">
+        <button id="create-export-btn">Create export files</button>
+      </div>
+      <div id="export-files-list" style="margin-top:16px;"></div>
+    </section>
+  </main>
+</div>
+
+<!-- Webcam modal -->
+<div id="webcam-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="webcam-title" style="margin:0;">Webcam</h3>
+      <button id="close-webcam-btn" class="secondary">✕</button>
+    </div>
+    <video id="webcam-video" autoplay playsinline muted></video>
+    <canvas id="webcam-canvas" class="hidden"></canvas>
+    <div class="row" style="margin-top:10px;">
+      <div id="webcam-class-row" class="row" style="margin:0;">
+        <label>Save to class:</label>
+        <select id="webcam-class-select"></select>
+      </div>
+      <button id="capture-btn">Capture</button>
+      <span id="webcam-status" class="muted"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+const state = {
+  project: null,
+  classes: [],
+  pollTimer: null,
+  webcamStream: null,
+  webcamMode: "dataset",
+};
+
+const JSON_HEADERS = { "Content-Type": "application/json" };
+
+async function api(path, options = {}) {
+  const response = await fetch(path, options);
+  let data = null;
+  try { data = await response.json(); } catch (error) { data = null; }
+  if (!response.ok) {
+    const message = data && data.detail ? data.detail : "Request failed (" + response.status + ")";
+    throw new Error(message);
+  }
+  return data;
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+let messageTimer = null;
+function showMessage(text, isError = false) {
+  const banner = document.getElementById("message-banner");
+  banner.textContent = text;
+  banner.classList.remove("hidden");
+  banner.classList.toggle("error", isError);
+  clearTimeout(messageTimer);
+  if (!isError) {
+    messageTimer = setTimeout(() => banner.classList.add("hidden"), 6000);
+  }
+}
+
+function showPage(name) {
+  document.querySelectorAll(".page").forEach(section => section.classList.add("hidden"));
+  document.getElementById("page-" + name).classList.remove("hidden");
+  document.querySelectorAll(".nav-btn").forEach(button => {
+    button.classList.toggle("active", button.dataset.page === name);
+  });
+  if (name === "projects") refreshProjects();
+  if (name === "dataset") refreshDataset();
+  if (name === "train") pollTrainingStatus();
+  if (name === "export") refreshExportFiles();
+}
+
+document.querySelectorAll(".nav-btn").forEach(button => {
+  button.addEventListener("click", () => showPage(button.dataset.page));
+});
+
+// --------------------------- projects ---------------------------
+
+async function refreshProjects() {
+  const data = await api("/api/projects");
+  const list = document.getElementById("projects-list");
+  if (!data.projects.length) {
+    list.innerHTML = '<p class="muted">No projects yet. Create your first project above.</p>';
+    return;
+  }
+  list.innerHTML = data.projects.map(project => `
+    <div class="card project-card">
+      <div>
+        <strong>${escapeHtml(project.name)}</strong>
+        <span class="badge">${project.image_count} images</span>
+        <p class="muted" style="margin:6px 0 0;">
+          Created ${escapeHtml(project.created_at)} — ${escapeHtml(project.description || "No description")}
+        </p>
+      </div>
+      <div class="row" style="margin:0;">
+        <button onclick="openProject(${project.id})">Open</button>
+        <button class="danger" onclick="deleteProject(${project.id})">Delete</button>
+      </div>
+    </div>`).join("");
+}
+
+async function createProject() {
+  const name = document.getElementById("new-project-name").value.trim();
+  const description = document.getElementById("new-project-description").value.trim();
+  if (!name) { showMessage("Please enter a project name.", true); return; }
+  try {
+    await api("/api/projects", { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ name, description }) });
+    document.getElementById("new-project-name").value = "";
+    document.getElementById("new-project-description").value = "";
+    showMessage("Project created.");
+    refreshProjects();
+  } catch (error) { showMessage(error.message, true); }
+}
+
+async function deleteProject(id) {
+  if (!confirm("Delete this project with all its images, classes and trained model?")) return;
+  try {
+    await api("/api/projects/" + id, { method: "DELETE" });
+    if (state.project && state.project.id === id) {
+      state.project = null;
+      document.getElementById("project-nav").classList.add("hidden");
+      showPage("projects");
+    }
+    showMessage("Project deleted.");
+  } catch (error) { showMessage(error.message, true); }
+}
+
+async function openProject(id) {
+  try {
+    const data = await api("/api/projects/" + id);
+    state.project = data.project;
+    state.classes = data.project.classes;
+    document.getElementById("nav-project-name").textContent = data.project.name;
+    document.getElementById("nav-project-name").classList.remove("hidden");
+    document.getElementById("project-nav").classList.remove("hidden");
+    showPage("dataset");
+  } catch (error) { showMessage(error.message, true); }
+}
+
+// --------------------------- dataset ---------------------------
+
+async function refreshDataset() {
+  if (!state.project) return;
+  const data = await api("/api/projects/" + state.project.id);
+  state.project = data.project;
+  state.classes = data.project.classes;
+  document.getElementById("dataset-title").textContent = "Dataset: " + data.project.name;
+  document.getElementById("dataset-info").textContent =
+    data.project.total_images + " images in total across " + state.classes.length + " class(es).";
+
+  const select = document.getElementById("upload-class-select");
+  select.innerHTML = state.classes.map(oneClass =>
+    `<option value="${oneClass.id}">${escapeHtml(oneClass.name)} (${oneClass.image_count})</option>`).join("");
+
+  const container = document.getElementById("class-thumbnails");
+  if (!state.classes.length) {
+    container.innerHTML = '<div class="card"><p class="muted">No classes yet. Add your first class above.</p></div>';
+    return;
+  }
+  container.innerHTML = state.classes.map(oneClass => `
+    <div class="card class-card">
+      <div class="class-header">
+        <strong>${escapeHtml(oneClass.name)}</strong>
+        <span class="badge">${oneClass.image_count} images</span>
+        <span style="flex:1;"></span>
+        <button class="secondary" onclick="renameClass(${oneClass.id})">Rename</button>
+        <button class="danger" onclick="deleteClass(${oneClass.id})">Delete class</button>
+      </div>
+      <div class="thumbs" id="thumbs-${oneClass.id}"><span class="muted">Loading…</span></div>
+    </div>`).join("");
+  for (const oneClass of state.classes) {
+    await loadThumbnails(oneClass.id);
+  }
+}
+
+async function loadThumbnails(classId) {
+  const data = await api("/api/classes/" + classId + "/images");
+  const container = document.getElementById("thumbs-" + classId);
+  if (!container) return;
+  if (!data.images.length) {
+    container.innerHTML = '<span class="muted">No images in this class yet.</span>';
+    return;
+  }
+  container.innerHTML = data.images.map(image => `
+    <div class="thumb">
+      <img src="/api/images/${image.id}/file" alt="${escapeHtml(image.original_name)}" loading="lazy">
+      <button class="thumb-delete" onclick="deleteImage(${image.id})" title="Delete image">✕</button>
+    </div>`).join("");
+}
+
+async function addClass() {
+  const name = document.getElementById("new-class-name").value.trim();
+  if (!name) { showMessage("Please enter a class name.", true); return; }
+  try {
+    await api("/api/projects/" + state.project.id + "/classes",
+      { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ name }) });
+    document.getElementById("new-class-name").value = "";
+    showMessage("Class added.");
+    refreshDataset();
+  } catch (error) { showMessage(error.message, true); }
+}
+
+async function renameClass(classId) {
+  const oneClass = state.classes.find(entry => entry.id === classId);
+  const newName = prompt("New class name:", oneClass ? oneClass.name : "");
+  if (!newName || !newName.trim()) return;
+  try {
+    await api("/api/classes/" + classId + "/rename",
+      { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ name: newName.trim() }) });
+    showMessage("Class renamed.");
+    refreshDataset();
+  } catch (error) { showMessage(error.message, true); }
+}
+
+async function deleteClass(classId) {
+  const oneClass = state.classes.find(entry => entry.id === classId);
+  const question = "Delete class \"" + (oneClass ? oneClass.name : classId) + "\" and all its images?";
+  if (!confirm(question)) return;
+  try {
+    await api("/api/classes/" + classId, { method: "DELETE" });
+    showMessage("Class deleted.");
+    refreshDataset();
+  } catch (error) { showMessage(error.message, true); }
+}
+
+async function deleteImage(imageId) {
+  if (!confirm("Delete this image?")) return;
+  try {
+    await api("/api/images/" + imageId, { method: "DELETE" });
+    refreshDataset();
+  } catch (error) { showMessage(error.message, true); }
+}
+
+async function uploadImages() {
+  const classId = parseInt(document.getElementById("upload-class-select").value, 10);
+  if (!classId) { showMessage("Create a class first, then choose it here.", true); return; }
+  const input = document.getElementById("file-input");
+  if (!input.files.length) { showMessage("Choose one or more image files first.", true); return; }
+  const formData = new FormData();
+  for (const file of input.files) {
+    formData.append("files", file, file.name);
+  }
+  try {
+    const data = await api(`/api/projects/${state.project.id}/upload?class_id=${classId}`,
+      { method: "POST", body: formData });
+    let message = data.saved.length + " image(s) added.";
+    if (data.failed.length) {
+      message += " Skipped: " + data.failed.map(failure =>
+        failure.original_name + " (" + failure.error + ")").join("; ");
+    }
+    showMessage(message, data.saved.length === 0);
+    input.value = "";
+    refreshDataset();
+  } catch (error) { showMessage(error.message, true); }
+}
+
+// --------------------------- webcam ---------------------------
+
+async function openWebcam(mode) {
+  if (mode === "dataset") {
+    if (!state.classes.length) { showMessage("Create a class before capturing images.", true); return; }
+    document.getElementById("webcam-class-row").classList.remove("hidden");
+    document.getElementById("capture-btn").textContent = "Capture & save";
+    const select = document.getElementById("webcam-class-select");
+    select.innerHTML = state.classes.map(oneClass =>
+      `<option value="${oneClass.id}">${escapeHtml(oneClass.name)}</option>`).join("");
+  } else {
+    document.getElementById("webcam-class-row").classList.add("hidden");
+    document.getElementById("capture-btn").textContent = "Capture & predict";
+  }
+  state.webcamMode = mode;
+  document.getElementById("webcam-status").textContent = "";
+  document.getElementById("webcam-modal").classList.remove("hidden");
+  try {
+    state.webcamStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+    document.getElementById("webcam-video").srcObject = state.webcamStream;
+  } catch (error) {
+    document.getElementById("webcam-status").textContent =
+      "Could not open the webcam: " + error.message;
+  }
+}
+
+function closeWebcam() {
+  if (state.webcamStream) {
+    state.webcamStream.getTracks().forEach(track => track.stop());
+    state.webcamStream = null;
+  }
+  document.getElementById("webcam-modal").classList.add("hidden");
+}
+
+async function captureFrame() {
+  const video = document.getElementById("webcam-video");
+  if (!video.videoWidth) {
+    document.getElementById("webcam-status").textContent = "The camera is not ready yet.";
+    return;
+  }
+  const canvas = document.getElementById("webcam-canvas");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext("2d").drawImage(video, 0, 0);
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.92));
+  const formData = new FormData();
+  formData.append("file", blob, "webcam_capture.jpg");
+
+  if (state.webcamMode === "dataset") {
+    const classId = document.getElementById("webcam-class-select").value;
+    try {
+      const data = await api(`/api/projects/${state.project.id}/webcam?class_id=${classId}`,
+        { method: "POST", body: formData });
+      document.getElementById("webcam-status").textContent =
+        data.saved.length ? "Saved to class." : data.failed[0].error;
+      refreshDataset();
+    } catch (error) {
+      document.getElementById("webcam-status").textContent = error.message;
+    }
+  } else {
+    try {
+      const result = await api(`/api/projects/${state.project.id}/predict`, { method: "POST", body: formData });
+      closeWebcam();
+      showPage("test");
+      document.getElementById("test-preview").innerHTML =
+        `<img src="${canvas.toDataURL("image/jpeg", 0.7)}" alt="Captured frame">`;
+      renderTestResult(result);
+    } catch (error) {
+      document.getElementById("webcam-status").textContent = error.message;
+    }
+  }
+}
+
+// --------------------------- training ---------------------------
+
+function formatAccuracy(value) {
+  return value == null ? "—" : (value * 100).toFixed(1) + "%";
+}
+
+function formatLoss(value) {
+  return value == null ? "—" : value.toFixed(4);
+}
+
+async function startTraining() {
+  const payload = {
+    project_id: state.project.id,
+    epochs: parseInt(document.getElementById("train-epochs").value, 10),
+    batch_size: parseInt(document.getElementById("train-batch").value, 10),
+    image_size: parseInt(document.getElementById("train-image-size").value, 10),
+    validation_split: parseFloat(document.getElementById("train-val-split").value),
+    learning_rate: parseFloat(document.getElementById("train-lr").value),
+  };
+  try {
+    await api("/api/train/start", { method: "POST", headers: JSON_HEADERS, body: JSON.stringify(payload) });
+  } catch (error) { showMessage(error.message, true); return; }
+  startPolling();
+}
+
+function startPolling() {
+  document.getElementById("start-training-btn").disabled = true;
+  document.getElementById("cancel-training-btn").classList.remove("hidden");
+  if (state.pollTimer) clearInterval(state.pollTimer);
+  state.pollTimer = setInterval(pollTrainingStatus, 1000);
+  pollTrainingStatus();
+}
+
+function stopPolling() {
+  if (state.pollTimer) {
+    clearInterval(state.pollTimer);
+    state.pollTimer = null;
+  }
+  document.getElementById("start-training-btn").disabled = false;
+  document.getElementById("cancel-training-btn").classList.add("hidden");
+}
+
+async function pollTrainingStatus() {
+  let status;
+  try {
+    status = await api("/api/train/status");
+  } catch (error) {
+    return; // temporary network hiccup, keep polling
+  }
+  renderTrainingStatus(status);
+  if (status.status !== "running") {
+    stopPolling();
+    if (status.status === "done") showMessage("Training finished. Try the model on the 'Test model' page.");
+    if (status.status === "error") showMessage(status.error || "Training failed.", true);
+    if (status.status === "cancelled") showMessage("Training was cancelled. No model was saved.");
+  }
+}
+
+function renderTrainingStatus(status) {
+  document.getElementById("training-status-text").textContent =
+    status.message || ("Status: " + status.status);
+  document.getElementById("training-progress-fill").style.width = (status.progress_percent || 0) + "%";
+  document.getElementById("metric-epoch").textContent =
+    status.status === "running" || status.epoch ? status.epoch + " / " + status.total_epochs : "—";
+  document.getElementById("metric-progress").textContent =
+    status.progress_percent ? status.progress_percent.toFixed(1) + "%" : "—";
+  document.getElementById("metric-accuracy").textContent = formatAccuracy(status.accuracy);
+  document.getElementById("metric-val-accuracy").textContent = formatAccuracy(status.val_accuracy);
+  document.getElementById("metric-loss").textContent = formatLoss(status.loss);
+  document.getElementById("metric-val-loss").textContent = formatLoss(status.val_loss);
+
+  const summary = document.getElementById("training-summary");
+  if (status.status === "done") {
+    summary.textContent = `Training set: ${status.train_samples} images. ` +
+      `Validation set: ${status.val_samples} images. Classes: ${status.class_names.join(", ")}.`;
+  } else {
+    summary.textContent = "";
+  }
+}
+
+async function cancelTraining() {
+  try { await api("/api/train/cancel", { method: "POST" }); }
+  catch (error) { showMessage(error.message, true); }
+}
+
+// --------------------------- model testing ---------------------------
+
+function renderTestResult(result) {
+  const unsureBadge = result.unsure
+    ? '<span class="badge warn">Unsure — confidence below ' + result.unsure_threshold.toFixed(0) + '%</span>'
+    : "";
+  const bars = result.top_predictions.map((prediction, index) => `
+    <div class="pred-row">
+      <span class="pred-name">${escapeHtml(prediction.class_name)}</span>
+      <div class="pred-bar">
+        <div class="pred-fill${index === 0 ? " top" : ""}" style="width:${prediction.confidence}%"></div>
+      </div>
+      <span class="pred-value">${prediction.confidence.toFixed(1)}%</span>
+    </div>`).join("");
+  document.getElementById("test-result").innerHTML = `
+    <div>${unsureBadge}</div>
+    <div class="pred-main">Predicted class: <strong>${escapeHtml(result.predicted_class)}</strong>
+      (${result.confidence.toFixed(1)}% confidence)</div>
+    <h3>Top three predictions</h3>
+    ${bars}
+    <p class="muted">${escapeHtml(result.message)}</p>`;
+}
+
+async function handleTestFile(event) {
+  const file = event.target.files[0];
+  if (!file || !state.project) return;
+  document.getElementById("test-preview").innerHTML =
+    `<img src="${URL.createObjectURL(file)}" alt="Preview">`;
+  const formData = new FormData();
+  formData.append("file", file, file.name);
+  document.getElementById("test-result").innerHTML = '<p class="muted">Predicting…</p>';
+  try {
+    const result = await api(`/api/projects/${state.project.id}/predict`, { method: "POST", body: formData });
+    renderTestResult(result);
+  } catch (error) {
+    document.getElementById("test-result").innerHTML =
+      `<p class="error-text">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+// --------------------------- evaluation ---------------------------
+
+function renderEvaluation(result) {
+  const matrix = result.confusion_matrix;
+  const matrixTable = `
+    <div class="table-scroll">
+    <table class="matrix-table">
+      <tr><th>true ↓ / predicted →</th>
+        ${matrix.class_names.map(name => `<th>${escapeHtml(name)}</th>`).join("")}
+      </tr>
+      ${matrix.matrix.map((row, index) => `
+        <tr>
+          <th>${escapeHtml(matrix.class_names[index])}</th>
+          ${row.map(count => `<td>${count}</td>`).join("")}
+        </tr>`).join("")}
+    </table>
+    </div>`;
+  const perClassRows = result.per_class.map(entry => `
+    <tr>
+      <td>${escapeHtml(entry.class_name)}</td>
+      <td>${(entry.precision * 100).toFixed(1)}%</td>
+      <td>${(entry.recall * 100).toFixed(1)}%</td>
+      <td>${(entry.f1_score * 100).toFixed(1)}%</td>
+      <td>${entry.support}</td>
+    </tr>`).join("");
+  document.getElementById("evaluation-result").innerHTML = `
+    <div class="card">
+      <div class="metric-grid">
+        <div class="metric-card"><span>Accuracy</span><strong>${(result.accuracy * 100).toFixed(1)}%</strong></div>
+        <div class="metric-card"><span>Precision (macro)</span><strong>${(result.macro_precision * 100).toFixed(1)}%</strong></div>
+        <div class="metric-card"><span>Recall (macro)</span><strong>${(result.macro_recall * 100).toFixed(1)}%</strong></div>
+        <div class="metric-card"><span>F1 score (macro)</span><strong>${(result.macro_f1 * 100).toFixed(1)}%</strong></div>
+      </div>
+      <p class="muted">Evaluated on ${result.total_images} images.
+        ${result.skipped_files ? result.skipped_files + " unreadable file(s) were skipped." : ""}</p>
+    </div>
+    <div class="card">
+      <h2>Per class</h2>
+      <table>
+        <tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1 score</th><th>Images</th></tr>
+        ${perClassRows}
+      </table>
+    </div>
+    <div class="card">
+      <h2>Confusion matrix</h2>
+      <p class="muted">Rows show the true class, columns show what the model predicted. The diagonal should hold most of the counts.</p>
+      ${matrixTable}
+      <p class="muted">${escapeHtml(result.note)}</p>
+    </div>`;
+}
+
+async function runEvaluation() {
+  const box = document.getElementById("evaluation-result");
+  box.innerHTML = '<p class="muted">Running evaluation…</p>';
+  try {
+    const result = await api(`/api/projects/${state.project.id}/evaluate`, { method: "POST" });
+    renderEvaluation(result);
+  } catch (error) {
+    box.innerHTML = `<p class="error-text">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+// --------------------------- export ---------------------------
+
+function formatBytes(size) {
+  if (size > 1048576) return (size / 1048576).toFixed(1) + " MB";
+  if (size > 1024) return (size / 1024).toFixed(1) + " KB";
+  return size + " B";
+}
+
+function renderExportFiles(files) {
+  const box = document.getElementById("export-files-list");
+  if (!files.length) {
+    box.innerHTML = '<p class="muted">No export files yet. Click "Create export files" above.</p>';
+    return;
+  }
+  box.innerHTML = `
+    <div class="card">
+      <table class="files-table">
+        <tr><th>File</th><th>What it is</th><th>Size</th><th></th></tr>
+        ${files.map(file => `
+          <tr>
+            <td>${escapeHtml(file.filename)}</td>
+            <td class="muted">${escapeHtml(FILE_DESCRIPTIONS[file.filename] || "")}</td>
+            <td>${formatBytes(file.size_bytes)}</td>
+            <td><a href="/api/projects/${state.project.id}/export/download/${encodeURIComponent(file.filename)}">Download</a></td>
+          </tr>`).join("")}
+      </table>
+    </div>`;
+}
+
+const FILE_DESCRIPTIONS = {
+  "model.keras": "Keras model, reopenable in Python with keras.models.load_model",
+  "model.tflite": "TensorFlow Lite model for phones and small devices",
+  "labels.txt": "Class names, one per line, in model output order",
+  "config.json": "Image size, class names and training settings",
+};
+
+async function createExport() {
+  const box = document.getElementById("export-files-list");
+  box.innerHTML = '<p class="muted">Creating export files… (the TFLite conversion can take a moment)</p>';
+  try {
+    const data = await api(`/api/projects/${state.project.id}/export`, { method: "POST" });
+    showMessage("Export files created.");
+    renderExportFiles(data.files);
+  } catch (error) {
+    box.innerHTML = `<p class="error-text">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+async function refreshExportFiles() {
+  try {
+    const data = await api(`/api/projects/${state.project.id}/export/files`);
+    renderExportFiles(data.files);
+  } catch (error) { /* leave the page as it is */ }
+}
+
+// --------------------------- wire up buttons ---------------------------
+
+document.getElementById("create-project-btn").addEventListener("click", createProject);
+document.getElementById("add-class-btn").addEventListener("click", addClass);
+document.getElementById("upload-btn").addEventListener("click", uploadImages);
+document.getElementById("open-webcam-btn").addEventListener("click", () => openWebcam("dataset"));
+document.getElementById("test-webcam-btn").addEventListener("click", () => openWebcam("predict"));
+document.getElementById("close-webcam-btn").addEventListener("click", closeWebcam);
+document.getElementById("capture-btn").addEventListener("click", captureFrame);
+document.getElementById("start-training-btn").addEventListener("click", startTraining);
+document.getElementById("cancel-training-btn").addEventListener("click", cancelTraining);
+document.getElementById("test-file-input").addEventListener("change", handleTestFile);
+document.getElementById("run-evaluation-btn").addEventListener("click", runEvaluation);
+document.getElementById("create-export-btn").addEventListener("click", createExport);
+
+showPage("projects");
+</script>
+</body>
+</html>
